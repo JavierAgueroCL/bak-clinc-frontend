@@ -132,23 +132,7 @@ export default function ProgramarCirugia() {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
-  const getOccupiedTimeSlots = (pavilion: string, startTime: string, durationMinutes: number) => {
-    const startMinutes = timeToMinutes(startTime);
-    const endMinutes = startMinutes + durationMinutes;
-    const slots = [];
-    
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += 60) {
-      slots.push(minutesToTime(minutes));
-    }
-    
-    return slots;
-  };
 
-  const calculateRowSpan = (durationMinutes: number) => {
-    // Calculate how many hour slots this surgery occupies
-    // Each row represents 60 minutes
-    return Math.ceil(durationMinutes / 60);
-  };
 
   const getSurgeryHeight = (durationMinutes: number) => {
     // Each minute = 1px in the new grid system
@@ -418,60 +402,9 @@ export default function ProgramarCirugia() {
     }
   };
 
-  const isTimeSlotOccupied = (pavilion: string, time: string) => {
-    const currentDateSurgeries = getCurrentDateScheduledSurgeries();
-    const currentMinutes = timeToMinutes(time);
-    
-    return currentDateSurgeries.some(surgery => {
-      if (surgery.pavilion !== pavilion) return false;
-      
-      const surgeryStartMinutes = timeToMinutes(surgery.time);
-      const surgeryEndMinutes = surgeryStartMinutes + surgery.durationMinutes;
-      
-      return currentMinutes >= surgeryStartMinutes && currentMinutes < surgeryEndMinutes;
-    });
-  };
 
-  const getScheduledSurgery = (pavilion: string, time: string) => {
-    const currentDateSurgeries = getCurrentDateScheduledSurgeries();
-    const currentMinutes = timeToMinutes(time);
-    
-    return currentDateSurgeries.find(surgery => {
-      if (surgery.pavilion !== pavilion) return false;
-      
-      const surgeryStartMinutes = timeToMinutes(surgery.time);
-      const surgeryEndMinutes = surgeryStartMinutes + surgery.durationMinutes;
-      
-      return currentMinutes >= surgeryStartMinutes && currentMinutes < surgeryEndMinutes;
-    });
-  };
 
-  const getSurgeryRowSpan = (surgery: ScheduledSurgery, timeSlot: string) => {
-    if (surgery.time === timeSlot) {
-      return calculateRowSpan(surgery.durationMinutes);
-    }
-    return 0;
-  };
 
-  const shouldShowTimeSlot = (pavilion: string, time: string) => {
-    const currentDateSurgeries = getCurrentDateScheduledSurgeries();
-    const currentMinutes = timeToMinutes(time);
-    
-    const occupyingSurgery = currentDateSurgeries.find(surgery => {
-      if (surgery.pavilion !== pavilion) return false;
-      
-      const surgeryStartMinutes = timeToMinutes(surgery.time);
-      const surgeryEndMinutes = surgeryStartMinutes + surgery.durationMinutes;
-      
-      return currentMinutes >= surgeryStartMinutes && currentMinutes < surgeryEndMinutes;
-    });
-    
-    if (occupyingSurgery) {
-      return occupyingSurgery.time === time;
-    }
-    
-    return true;
-  };
 
   return (
     <AuthLayout title="BAK Clinic - Programar Cirugía">

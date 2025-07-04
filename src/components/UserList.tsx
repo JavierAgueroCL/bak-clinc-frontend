@@ -70,7 +70,7 @@ export const UserList: React.FC = () => {
           await new Promise(resolve => setTimeout(resolve, 500));
           setUsers(mockUsers);
         }
-      } catch (err) {
+      } catch {
         setError('Error al cargar usuarios');
       } finally {
         setIsLoading(false);

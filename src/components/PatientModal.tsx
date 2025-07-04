@@ -7,7 +7,7 @@ interface PatientModalProps {
   mode: 'view' | 'edit' | 'create';
   patient: Patient | null;
   onClose: () => void;
-  onSave: (patientData: any) => void;
+  onSave: (patientData: PatientFormData) => void;
 }
 
 interface PatientFormData {

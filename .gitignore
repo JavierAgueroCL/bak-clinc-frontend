@@ -30,7 +30,6 @@ yarn-debug.log*
 postman_collection.json
 CLAUDE.md
 .claude
-package-lock.json
 yarn-error.log*
 .pnpm-debug.log*
 

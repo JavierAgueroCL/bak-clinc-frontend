@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
 

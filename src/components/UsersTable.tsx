@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '@/types/auth';
 import { authApi, ApiError } from '@/services/api';
 import { UserModal } from './UserModal';
@@ -35,7 +35,7 @@ export const UsersTable: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  const fetchUsers = async (page = 1, limit = 10) => {
+  const fetchUsers = useCallback(async (page = 1, limit = 10) => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       
@@ -70,7 +70,7 @@ export const UsersTable: React.FC = () => {
         isLoading: false,
       }));
     }
-  };
+  }, [filters]);
 
   // Debounce para el término de búsqueda
   useEffect(() => {
@@ -91,13 +91,13 @@ export const UsersTable: React.FC = () => {
     if (isInitialized) {
       fetchUsers(1, state.limit); // Siempre volver a página 1 cuando cambian filtros
     }
-  }, [filters.search, filters.role, filters.is_active, isInitialized]);
+  }, [filters.search, filters.role, filters.is_active, isInitialized, fetchUsers, state.limit]);
 
   // Carga inicial solamente
   useEffect(() => {
     fetchUsers(1, state.limit);
     setIsInitialized(true);
-  }, []);
+  }, [fetchUsers, state.limit]);
 
   const handlePageChange = (newPage: number) => {
     setState(prev => ({ ...prev, page: newPage }));

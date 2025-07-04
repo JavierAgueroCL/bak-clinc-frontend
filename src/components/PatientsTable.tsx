@@ -102,7 +102,7 @@ export const PatientsTable: React.FC = () => {
     setSelectedPatient(null);
   };
 
-  const handleModalSave = (patientData: any) => {
+  const handleModalSave = (patientData: { name: string; rut: string; email: string; phone: string }) => {
     if (modalMode === 'create') {
       const newPatient: Patient = {
         id: Date.now().toString(),
