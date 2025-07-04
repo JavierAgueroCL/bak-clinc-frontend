@@ -14,6 +14,19 @@ const nextConfig: NextConfig = {
   //     },
   //   ];
   // },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "connect-src 'self' http://38.225.91.15:3000 https://38.225.91.15:3000 data: blob:;",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
