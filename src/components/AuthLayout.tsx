@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSidebar } from '@/context/SidebarContext';
 import { Sidebar } from './Sidebar';
 import { ProfileCard } from './auth/ProfileCard';
 
@@ -12,6 +13,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title = 'BAK Clinic' }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { isSidebarOpen, isCollapsed } = useSidebar();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   if (isLoading) {
@@ -36,7 +38,9 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title = 'BAK C
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col ml-64">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        isSidebarOpen ? 'ml-64' : isCollapsed ? 'ml-16' : 'ml-0'
+      }`}>
         <nav className="bg-white shadow-sm border-b">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">

@@ -5,7 +5,7 @@ import { UsersTable } from '@/components/UsersTable';
 
 export default function UsersPage() {
   return (
-    <AuthLayout title="BAK Clinic - Gestión de Usuarios">
+    <AuthLayout title="BAK Clinic - Personal">
       <UsersTable />
     </AuthLayout>
   );

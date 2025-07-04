@@ -17,8 +17,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onForgotPassword 
 }) => {
   const [formData, setFormData] = useState<LoginRequest>({
-    email: '',
-    password: '',
+    email: 'admin@example.com',
+    password: 'password123',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +102,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         >
           {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </button>
+        
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🚀 Login Rápido (Admin)
+          </button>
+        </div>
       </form>
 
       <div className="mt-4 space-y-2">
