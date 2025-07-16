@@ -52,18 +52,6 @@ export const UserList: React.FC = () => {
               created_at: '2025-01-02T00:00:00.000Z',
               updated_at: '2025-01-02T00:00:00.000Z',
             },
-            {
-              id: 3,
-              email: 'patient@clinic.com',
-              first_name: 'María',
-              last_name: 'González',
-              phone: '+1234567892',
-              role: 'patient',
-              is_active: true,
-              email_verified: false,
-              created_at: '2025-01-03T00:00:00.000Z',
-              updated_at: '2025-01-03T00:00:00.000Z',
-            },
           ];
           
           // Simular delay de API

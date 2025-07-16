@@ -17,7 +17,7 @@ interface UserFormData {
   first_name: string;
   last_name: string;
   phone: string;
-  role: 'patient' | 'doctor' | 'admin';
+  role: 'doctor' | 'admin';
 }
 
 export const UserModal: React.FC<UserModalProps> = ({ mode, user, onClose, onSave }) => {
@@ -27,7 +27,7 @@ export const UserModal: React.FC<UserModalProps> = ({ mode, user, onClose, onSav
     first_name: '',
     last_name: '',
     phone: '',
-    role: 'patient',
+    role: 'doctor',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +43,7 @@ export const UserModal: React.FC<UserModalProps> = ({ mode, user, onClose, onSav
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         phone: user.phone || '',
-        role: user.role,
+        role: user.role as 'doctor' | 'admin',
       });
     } else {
       setFormData({
@@ -52,7 +52,7 @@ export const UserModal: React.FC<UserModalProps> = ({ mode, user, onClose, onSav
         first_name: '',
         last_name: '',
         phone: '',
-        role: 'patient',
+        role: 'doctor',
       });
     }
   }, [user]);
@@ -318,7 +318,6 @@ export const UserModal: React.FC<UserModalProps> = ({ mode, user, onClose, onSav
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   >
-                    <option value="patient">Paciente</option>
                     <option value="doctor">Doctor</option>
                     <option value="admin">Administrador</option>
                   </select>

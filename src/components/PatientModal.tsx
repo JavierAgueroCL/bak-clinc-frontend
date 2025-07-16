@@ -8,18 +8,19 @@ interface PatientModalProps {
   patient: Patient | null;
   onClose: () => void;
   onSave: (patientData: PatientFormData) => void;
+  serverError?: string | null;
 }
 
 interface PatientFormData {
-  name: string;
+  full_name: string;
   rut: string;
   email: string;
   phone: string;
 }
 
-export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClose, onSave }) => {
+export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClose, onSave, serverError }) => {
   const [formData, setFormData] = useState<PatientFormData>({
-    name: '',
+    full_name: '',
     rut: '',
     email: '',
     phone: '',
@@ -30,14 +31,14 @@ export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClo
   useEffect(() => {
     if (patient) {
       setFormData({
-        name: patient.name || '',
+        full_name: patient.full_name || '',
         rut: patient.rut || '',
         email: patient.email || '',
         phone: patient.phone || '',
       });
     } else {
       setFormData({
-        name: '',
+        full_name: '',
         rut: '',
         email: '',
         phone: '',
@@ -68,8 +69,8 @@ export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClo
   const validateForm = () => {
     const newErrors: Partial<PatientFormData> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = 'El nombre es requerido';
     }
 
     if (!formData.rut.trim()) {
@@ -134,7 +135,7 @@ export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClo
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                  <p className="text-gray-900">{patient?.name}</p>
+                  <p className="text-gray-900">{patient?.full_name}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">RUT</label>
@@ -149,21 +150,25 @@ export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClo
                   <p className="text-gray-900">{patient?.phone}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Registro</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                   <p className="text-gray-900">
-                    {patient ? new Date(patient.registrationDate).toLocaleDateString('es-ES') : ''}
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      patient?.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {patient?.is_active ? 'Activo' : 'Inactivo'}
+                    </span>
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Creación</label>
                   <p className="text-gray-900">
-                    {patient ? new Date(patient.createdAt).toLocaleString('es-ES') : ''}
+                    {patient ? new Date(patient.created_at).toLocaleString('es-ES') : ''}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Última Actualización</label>
                   <p className="text-gray-900">
-                    {patient ? new Date(patient.updatedAt).toLocaleString('es-ES') : ''}
+                    {patient ? new Date(patient.updated_at).toLocaleString('es-ES') : ''}
                   </p>
                 </div>
               </div>
@@ -175,15 +180,15 @@ export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClo
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="full_name"
+                    value={formData.full_name}
                     onChange={handleChange}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white ${
-                      errors.name ? 'border-red-300' : 'border-gray-300'
+                      errors.full_name ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Ingrese el nombre completo"
                   />
-                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                  {errors.full_name && <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>}
                 </div>
                 
                 <div>
@@ -231,6 +236,23 @@ export const PatientModal: React.FC<PatientModalProps> = ({ mode, patient, onClo
                   {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                 </div>
               </div>
+
+              {/* Server error message */}
+              {serverError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex">
+                    <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">Error al guardar el paciente</h3>
+                      <div className="mt-2 text-sm text-red-700">
+                        {serverError}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button

@@ -1,77 +1,71 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Patient } from '@/types/patient';
 import { PatientModal } from './PatientModal';
+import { patientApi, ApiError } from '@/services/api';
 
-// Datos de ejemplo sin backend
-const mockPatients: Patient[] = [
-  {
-    id: '1',
-    name: 'Juan Pérez González',
-    rut: '12.345.678-9',
-    email: 'juan.perez@email.com',
-    phone: '+56 9 1234 5678',
-    registrationDate: '2024-01-15',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: '2',
-    name: 'María García López',
-    rut: '98.765.432-1',
-    email: 'maria.garcia@email.com',
-    phone: '+56 9 8765 4321',
-    registrationDate: '2024-02-20',
-    createdAt: '2024-02-20T14:15:00Z',
-    updatedAt: '2024-02-20T14:15:00Z'
-  },
-  {
-    id: '3',
-    name: 'Carlos López Martín',
-    rut: '15.678.432-5',
-    email: 'carlos.lopez@email.com',
-    phone: '+56 9 5678 1234',
-    registrationDate: '2024-03-10',
-    createdAt: '2024-03-10T09:45:00Z',
-    updatedAt: '2024-03-10T09:45:00Z'
-  },
-  {
-    id: '4',
-    name: 'Ana Rodríguez Silva',
-    rut: '19.876.543-2',
-    email: 'ana.rodriguez@email.com',
-    phone: '+56 9 9876 5432',
-    registrationDate: '2024-04-05',
-    createdAt: '2024-04-05T16:20:00Z',
-    updatedAt: '2024-04-05T16:20:00Z'
-  },
-  {
-    id: '5',
-    name: 'Luis Martín Torres',
-    rut: '11.222.333-4',
-    email: 'luis.martin@email.com',
-    phone: '+56 9 1122 3344',
-    registrationDate: '2024-05-12',
-    createdAt: '2024-05-12T11:10:00Z',
-    updatedAt: '2024-05-12T11:10:00Z'
-  }
-];
 
 export const PatientsTable: React.FC = () => {
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0
+  });
 
-  // Filtrar pacientes por término de búsqueda
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.rut.includes(searchTerm) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
-  );
+  // Load patients from API
+  const loadPatients = useCallback(async (page: number = 1, search?: string) => {
+    try {
+      setLoading(true);
+      const response = await patientApi.getPatients({
+        page,
+        limit: pagination.limit,
+        ...(search && { search })
+      });
+      setPatients(response.patients);
+      setPagination({
+        page: response.pagination.page,
+        limit: response.pagination.limit,
+        total: response.pagination.total,
+        totalPages: response.pagination.totalPages
+      });
+      setError(null);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Error inesperado al cargar pacientes');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.limit]);
+
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
+
+  // Handle search with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm) {
+        loadPatients(1, searchTerm);
+      } else {
+        loadPatients(1);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, loadPatients]);
 
   const handleView = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -82,51 +76,63 @@ export const PatientsTable: React.FC = () => {
   const handleEdit = (patient: Patient) => {
     setSelectedPatient(patient);
     setModalMode('edit');
+    setModalError(null);
     setIsModalOpen(true);
   };
 
   const handleCreate = () => {
     setSelectedPatient(null);
     setModalMode('create');
+    setModalError(null);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (patient: Patient) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar a ${patient.name}?`)) {
-      setPatients(patients.filter(p => p.id !== patient.id));
+  const handleDelete = async (patient: Patient) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar a ${patient.full_name}?`)) {
+      try {
+        await patientApi.deletePatient(patient.id);
+        loadPatients(pagination.page);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setError(err.message);
+        } else {
+          setError('Error al eliminar paciente');
+        }
+      }
     }
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedPatient(null);
+    setModalError(null);
   };
 
-  const handleModalSave = (patientData: { name: string; rut: string; email: string; phone: string }) => {
-    if (modalMode === 'create') {
-      const newPatient: Patient = {
-        id: Date.now().toString(),
-        name: patientData.name,
-        rut: patientData.rut,
-        email: patientData.email,
-        phone: patientData.phone,
-        registrationDate: new Date().toISOString().split('T')[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      setPatients([...patients, newPatient]);
-    } else if (modalMode === 'edit' && selectedPatient) {
-      const updatedPatient: Patient = {
-        ...selectedPatient,
-        name: patientData.name,
-        rut: patientData.rut,
-        email: patientData.email,
-        phone: patientData.phone,
-        updatedAt: new Date().toISOString()
-      };
-      setPatients(patients.map(p => p.id === selectedPatient.id ? updatedPatient : p));
+  const handleModalSave = async (patientData: { full_name: string; rut: string; email: string; phone: string }) => {
+    try {
+      setModalError(null);
+      if (modalMode === 'create') {
+        await patientApi.createPatient({
+          full_name: patientData.full_name,
+          rut: patientData.rut,
+          email: patientData.email,
+          phone: patientData.phone
+        });
+      } else if (modalMode === 'edit' && selectedPatient) {
+        await patientApi.updatePatient(selectedPatient.id, {
+          full_name: patientData.full_name,
+          phone: patientData.phone
+        });
+      }
+      loadPatients(pagination.page);
+      handleModalClose();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setModalError(err.message);
+      } else {
+        setModalError('Error al guardar paciente');
+      }
     }
-    handleModalClose();
   };
 
   return (
@@ -171,18 +177,16 @@ export const PatientsTable: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-blue-600">{patients.length}</div>
-          <div className="text-sm text-gray-600">Total Pacientes</div>
+          <div className="text-2xl font-bold text-blue-600">{loading ? '...' : patients.length}</div>
+          <div className="text-sm text-gray-600">En esta página</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-green-600">{filteredPatients.length}</div>
-          <div className="text-sm text-gray-600">Resultados</div>
+          <div className="text-2xl font-bold text-green-600">{pagination.total}</div>
+          <div className="text-sm text-gray-600">Total en BD</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-purple-600">
-            {patients.filter(p => new Date(p.registrationDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}
-          </div>
-          <div className="text-sm text-gray-600">Nuevos (30 días)</div>
+          <div className="text-2xl font-bold text-purple-600">{patients.length}</div>
+          <div className="text-sm text-gray-600">En esta página</div>
         </div>
       </div>
 
@@ -210,17 +214,45 @@ export const PatientsTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPatients.map((patient) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-gray-600">Cargando pacientes...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center">
+                    <div className="text-red-600">{error}</div>
+                    <button 
+                      onClick={() => loadPatients()} 
+                      className="mt-2 text-blue-600 hover:underline"
+                    >
+                      Reintentar
+                    </button>
+                  </td>
+                </tr>
+              ) : patients.map((patient) => (
                 <tr key={patient.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                         <span className="text-sm font-medium text-blue-600">
-                          {patient.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          {patient.full_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{patient.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{patient.full_name}</div>
+                        <div className="text-xs text-gray-500">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            patient.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {patient.is_active ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -233,7 +265,10 @@ export const PatientsTable: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(patient.registrationDate).toLocaleDateString('es-ES')}
+                      {new Date(patient.created_at).toLocaleDateString('es-ES')}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(patient.created_at).toLocaleTimeString('es-ES')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -274,7 +309,7 @@ export const PatientsTable: React.FC = () => {
           </table>
         </div>
 
-        {filteredPatients.length === 0 && (
+        {!loading && !error && patients.length === 0 && (
           <div className="text-center py-12">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -283,6 +318,61 @@ export const PatientsTable: React.FC = () => {
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm ? 'Intenta con otros términos de búsqueda.' : 'Comienza creando un nuevo paciente.'}
             </p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && !error && pagination.totalPages > 1 && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => loadPatients(pagination.page - 1, searchTerm)}
+                disabled={pagination.page <= 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => loadPatients(pagination.page + 1, searchTerm)}
+                disabled={pagination.page >= pagination.totalPages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Siguiente
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Mostrando{' '}
+                  <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span>
+                  {' '}a{' '}
+                  <span className="font-medium">
+                    {Math.min(pagination.page * pagination.limit, pagination.total)}
+                  </span>
+                  {' '}de{' '}
+                  <span className="font-medium">{pagination.total}</span>
+                  {' '}resultados
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => loadPatients(pagination.page - 1, searchTerm)}
+                    disabled={pagination.page <= 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => loadPatients(pagination.page + 1, searchTerm)}
+                    disabled={pagination.page >= pagination.totalPages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </nav>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -294,6 +384,7 @@ export const PatientsTable: React.FC = () => {
           patient={selectedPatient}
           onClose={handleModalClose}
           onSave={handleModalSave}
+          serverError={modalError}
         />
       )}
     </div>

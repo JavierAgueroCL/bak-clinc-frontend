@@ -14,7 +14,7 @@ export const Sidebar: React.FC = () => {
   };
 
   const handleDashboardClick = () => {
-    router.push('/');
+    router.push('/dashboard');
   };
 
   const handleSurgerySchedulingClick = () => {
@@ -66,7 +66,7 @@ export const Sidebar: React.FC = () => {
               <button 
                 onClick={handleDashboardClick}
                 className={`w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center space-x-3 ${
-                  pathname === '/' ? 'bg-blue-50 text-blue-700' : ''
+                  pathname === '/dashboard' ? 'bg-blue-50 text-blue-700' : ''
                 }`}
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

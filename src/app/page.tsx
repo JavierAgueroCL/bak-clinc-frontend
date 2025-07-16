@@ -1,32 +1,30 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { AuthLayout } from '@/components/AuthLayout';
 import { Dashboard } from "@/components/Dashboard";
-import { DashboardStats } from "@/components/DashboardStats";
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Si está autenticado, redirigir al dashboard avanzado
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   // Si no está autenticado, mostrar el Dashboard con login
   if (!isAuthenticated) {
     return <Dashboard />;
   }
 
-  // Si está autenticado, mostrar el dashboard principal
+  // Loading state mientras redirige
   return (
-    <AuthLayout title="BAK Clinic">
-      <div className="space-y-6">
-        <div className="text-center py-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Bienvenido al Sistema BAK Clinic
-          </h2>
-          <p className="text-gray-600 text-lg">
-            Panel de control y estadísticas
-          </p>
-        </div>
-        <DashboardStats />
-      </div>
-    </AuthLayout>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
   );
 }
